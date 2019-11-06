@@ -1,8 +1,8 @@
 from pymongo import MongoClient, ReturnDocument
 import bcrypt
 import re
-import datetime
-from CalendarModel import DailyRecord
+import datetime as dt
+from Models.CalendarModel import DailyRecord
 
 
 class PersonModel:
@@ -16,22 +16,31 @@ class PersonModel:
     def insert_person(self,data):
         hashed = bcrypt.hashpw(data.password.encode(), bcrypt.gensalt())
 
-        now = datetime.datetime.now()
-        start_date = datetime.date(now.year, now.month, now.day).isoformat()
+        now = dt.datetime.now()
+        start_date = dt.date(now.year, now.month, now.day).isoformat()
 
         dr = DailyRecord()
-        calendar = {start_date: dr.hourly_tracker}
+        calendar = [{'date':start_date, 'hours': dr.hourly_tracker}]
 
         id1 = self.People.insert_one({"username": data.username, "password": hashed,
                                 "email": data.email, "age": data.age, "occupation": data.occupation,
                                 "location": data.location, "goals": data.goals, "calendar": calendar})
         print("uid is", id1)
-        id2 = self.Calendar.insert_one({"_id": id1.inserted_id})
-        print("uid is", id2)
+
+    def get_id_from_username(self, username):
+
+        if self.People.count_documents({"username": username}) == 0:
+            return
+
+        person = self.People.find_one({"username": username})
+        return person['_id']
 
     def new_goal(self, person_id, goal):
         filter = {'goal':re.compile(goal, re.IGNORECASE)}
         person = self.People.find_one({"_id": person_id})
+
+        if self.People.count_documents({"_id": person_id}) == 0:
+            return
 
         personal_goals = person['goals']
 
@@ -48,10 +57,41 @@ class PersonModel:
 
         if id not in personal_goals:
             personal_goals.append(id)
-            self.Goals.update({"_id": person_id},{"$set": {"goals": personal_goals}})
+            self.People.update_one({"_id": person_id},{"$set": {"goals": personal_goals}})
 
         # TODO: personal_goals might not be the best return value, but it's good for debugging for now
         return personal_goals
+
+    def retrieve_calendar(self, person_id):
+        person = self.People.find_one({"_id": person_id})
+        return person['calendar']
+
+    def new_day_in_calendar(self, person_id, date):
+        new_date = dt.date(date.year, date.month, date.day).isoformat()
+
+        filter = {'_id':person_id, 'calendar':{'$elemMatch':{'date':new_date}}}
+
+        if self.People.count_documents(filter) == 0:
+            dr = DailyRecord()
+            self.People.update_one({'_id': person_id}, {'$push': {'calendar': {'date': new_date, 'hours': dr.hourly_tracker}}})
+        else:
+            return
+
+    def add_activity_to_hour(self, person_id, date, hour, activity):
+        find_date = dt.date(date.year, date.month, date.day).isoformat()
+
+        filter = {'_id':person_id, 'calendar':{'$elemMatch':{'date':find_date}}}
+
+        hour_label = str(hour).zfill(2)
+        field = 'calendar.$.hours.' + hour_label
+
+        if self.People.count_documents(filter) == 0:
+            return
+        else:
+            hour_filter = {'_id': person_id, 'calendar': {'$elemMatch': {'date': find_date}}}
+            self.People.update(hour_filter,{'$set': {field: activity}})
+
+
 
 
 
@@ -66,10 +106,20 @@ class TestData:
         self.goals = []
 
 
-#data = TestData()
-#pm = PersonModel()
-#pm.insert_person(data)
+data = TestData()
+pm = PersonModel()
+pm.insert_person(data)
+user_id = pm.get_id_from_username('evanakm')
+pm.new_goal(user_id,'Exercise')
+pm.new_goal(user_id,'Michelle')
+pm.new_goal(user_id,'Improve Coding')
+pm.new_goal(user_id,'Read more')
 
+pm.new_day_in_calendar(user_id,dt.date(2019,11,4))
+pm.new_day_in_calendar(user_id,dt.date(2018,4,6))
+pm.new_day_in_calendar(user_id,dt.date(2016,10,14))
+
+pm.add_activity_to_hour(user_id,dt.date(2019,11,4),4,'exercise')
 
 
 
