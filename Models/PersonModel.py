@@ -4,6 +4,7 @@ import re
 import datetime as dt
 from Models.CalendarModel import DailyRecord
 from bson.json_util import dumps
+from Views.utilities import CreateTable
 
 
 class PersonModel:
@@ -165,3 +166,5 @@ for cal in cals:
     print(dumps(cal))
 
 print(dumps(cals))
+
+print(CreateTable.CreateTable(cals))
