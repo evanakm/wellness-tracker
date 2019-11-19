@@ -1,7 +1,7 @@
 import pandas as pd
 from math import pi
 import datetime as dt
-from bokeh.io import output_file, show
+from bokeh.io import output_file, show, curdoc
 from bokeh.models import DatetimeTickFormatter, Select, FactorRange, ColumnDataSource
 from bokeh.plotting import figure
 from bokeh.layouts import column, row
@@ -99,6 +99,12 @@ def get_unique_activities(data):
 
 acts = get_unique_activities(raw_data)
 
+sorted_acts = list(acts)
+sorted_acts.sort()
+print(sorted_acts)
+
+checkbox_group = CheckboxGroup(labels=sorted_acts, active=[1,2])
+date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2018, 1, 1), end=dt.date.today(), value=(dt.date(2019, 11, 1), dt.date.today()), step=1)
 
 def extract_frequencies(data):
     activities = list(get_unique_activities(data))
@@ -126,16 +132,33 @@ x, y = extract_frequencies(raw_data)
 print(x)
 print(y)
 
+
+def reduce_data_set_by_booleans(bools, dates):
+    new_x = [a for (a, b) in zip(x, bools) if b]
+    new_y = [a for (a, b) in zip(y, bools) if b]
+
+    return new_x, new_y
+
+def reduce_data_set_by_list(activities, dates):
+    bools = [i[1] in activities for i in x]
+    return reduce_data_set_by_booleans(bools, dates)
+
+def reduce_data_set_by_indices(indices, dates):
+    activities = [sorted_acts[i] for i in indices]
+    return reduce_data_set_by_list(activities, dates)
+
+
+new_x, new_y = reduce_data_set_by_indices(checkbox_group.active, test_dates)
+
 red_acts = ['goal_3','sleep','tv']
-indices = [i[1] in red_acts for i in x]
 
 sublist = [i for i in x if i[1] in red_acts]
 
-print(indices)
-print(sublist)
+#print(indices)
+#print(sublist)
 
-new_x = [a for (a, b) in zip(x, indices) if b]
-new_y = [a for (a, b) in zip(y, indices) if b]
+#new_x = [a for (a, b) in zip(x, indices) if b]
+#new_y = [a for (a, b) in zip(y, indices) if b]
 
 source = ColumnDataSource(data=dict(x=new_x, counts=new_y))
 
@@ -151,16 +174,33 @@ p.xgrid.grid_line_color = None
 #show(p)
 
 # Controls
-sorted_acts = list(acts)
-sorted_acts.sort()
-print(sorted_acts)
+def update():
+    print(checkbox_group.active)
+    print(date_slider.value)
 
-checkbox_group = CheckboxGroup(labels=sorted_acts, active=[])
-date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2018, 1, 1), end=dt.date.today(), value=(dt.date(2019, 11, 1), dt.date.today()), step=1)
+    update_x, update_y = reduce_data_set_by_indices(checkbox_group.active, test_dates)
+
+    p.x_range.factors = update_x
+    source.data = dict(x=update_x, counts=update_y)
+
+    '''source.data = df[(df.Location == location.value) & (df.Year == int(year.value))]
+    #print(location.value)
+    #print(year.value)
+
+    pop = df[df.Location == location.value].groupby(df.Year).Value.sum()
+    new_known = pop[pop.index <= 2010]
+    new_predicted = pop[pop.index >= 2010]
+    known.data = dict(x=new_known.index.map(str), y=new_known.values)
+    # predicted.data = dict(x=new_predicted.index.map(str), y=new_predicted.values)
+    '''
+
+checkbox_group.on_change('active',lambda attr, old, new: update())
+
 
 controls = column(checkbox_group,date_slider,width=300)
 
-show(row(p,controls))
+curdoc().add_root(row(p,controls))
+#show(row(p,controls))
 
 '''
 
