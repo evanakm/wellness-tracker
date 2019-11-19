@@ -4,6 +4,8 @@ import datetime as dt
 from bokeh.io import output_file, show
 from bokeh.models import DatetimeTickFormatter, Select, FactorRange, ColumnDataSource
 from bokeh.plotting import figure
+from bokeh.layouts import column, row
+from bokeh.models.widgets import CheckboxGroup, DateRangeSlider
 
 raw_data = [{"date": "2019-11-04",
              "hours": {"00": "sleep",
@@ -124,9 +126,20 @@ x, y = extract_frequencies(raw_data)
 print(x)
 print(y)
 
-source = ColumnDataSource(data=dict(x=x, counts=y))
+red_acts = ['goal_3','sleep','tv']
+indices = [i[1] in red_acts for i in x]
 
-p = figure(x_range=FactorRange(*x), plot_height=300, toolbar_location=None, tools="")
+sublist = [i for i in x if i[1] in red_acts]
+
+print(indices)
+print(sublist)
+
+new_x = [a for (a, b) in zip(x, indices) if b]
+new_y = [a for (a, b) in zip(y, indices) if b]
+
+source = ColumnDataSource(data=dict(x=new_x, counts=new_y))
+
+p = figure(x_range=FactorRange(*new_x), plot_height=300, toolbar_location=None, tools="")
 
 p.vbar(x='x', top ='counts', width=0.9, source=source)
 
@@ -135,39 +148,19 @@ p.x_range.range_padding = 0.1
 p.xaxis.major_label_orientation = 1
 p.xgrid.grid_line_color = None
 
-show(p)
+#show(p)
 
-###################3
-'''
-fruits = ['Apples', 'Pears', 'Nectarines', 'Plums', 'Grapes', 'Strawberries']
-years = ['2015', '2016', '2017']
+# Controls
+sorted_acts = list(acts)
+sorted_acts.sort()
+print(sorted_acts)
 
-data = {'fruits' : fruits,
-        '2015'   : [2, 1, 4, 3, 2, 4],
-        '2016'   : [5, 3, 3, 2, 4, 6],
-        '2017'   : [3, 2, 4, 4, 5, 3]}
+checkbox_group = CheckboxGroup(labels=sorted_acts, active=[])
+date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2018, 1, 1), end=dt.date.today(), value=(dt.date(2019, 11, 1), dt.date.today()), step=1)
 
-# this creates [ ("Apples", "2015"), ("Apples", "2016"), ("Apples", "2017"), ("Pears", "2015), ... ]
-x = [ (fruit, year) for fruit in fruits for year in years ]
-y = sum(zip(data['2015'], data['2016'], data['2017']), ()) # like an hstack
+controls = column(checkbox_group,date_slider,width=300)
 
-source = ColumnDataSource(data=dict(x=x, counts=y))
-
-p = figure(x_range=FactorRange(*x), plot_height=250, title="Fruit Counts by Year",
-           toolbar_location=None, tools="")
-
-p.vbar(x='x', top='counts', width=0.9, source=source)
-
-p.y_range.start = 0
-p.x_range.range_padding = 0.1
-p.xaxis.major_label_orientation = 1
-p.xgrid.grid_line_color = None
-
-show(p)
-
-
-
-'''
+show(row(p,controls))
 
 '''
 
