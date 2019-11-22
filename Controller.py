@@ -5,6 +5,8 @@ from bson.json_util import dumps
 from json2html import *
 import dateutil.parser
 import json
+from bokeh.client import pull_session
+from bokeh.embed import server_session
 
 from Views.utilities import CreateTable
 
@@ -14,7 +16,8 @@ urls = (
     '/', 'index',
     '/add_hours','add_hours',
     '/add_data','add_data',
-    '/table','tableau'
+    '/table','tableau',
+    '/view_plot','view_plot'
 )
 
 app = web.application(urls, globals())
@@ -80,6 +83,17 @@ class retrieve_data:
 
         return pm.get_records_from_dates(user_id,dates)
 
+class view_plot:
+    def GET(self):
+        with pull_session(url="http://localhost:5006/CreatePlot") as session:
+            # update or customize that session
+            # session.document.roots[0].children[1].title.text = "Special Sliders For A Specific User!"
+
+            # generate a script to load the customized session
+            script = server_session(session_id=session.id, url='http://localhost:5006/CreatePlot')
+
+            # use the script in the rendered page
+            return render.Main(script)
 
 
 if __name__ == "__main__":
