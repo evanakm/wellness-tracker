@@ -4,6 +4,7 @@ from Models import PersonModel, CalendarModel
 from bson.json_util import dumps
 from json2html import *
 import dateutil.parser
+import json
 
 from Views.utilities import CreateTable
 
@@ -17,7 +18,8 @@ urls = (
 )
 
 app = web.application(urls, globals())
-session = web.session.Session(app, web.session.DiskStore("session"), initializer={"user": 'evanakm'})
+session = web.session.Session(app, web.session.DiskStore("session"), initializer={
+    "user": 'evanakm', "dates": [dt.date.today()]})
 session_data = session._initializer
 
 render = web.template.render("Views/",base="Main",
@@ -60,6 +62,24 @@ class tableau:
 class add_data:
     def GET(self):
         return render.AddData()
+
+class set_dates:
+    def POST(self):
+        data = json.loads(web.data())
+        d1 = dt.date.fromisoformat(data['start_date'])
+        d2 = dt.date.fromisoformat(data['end_date'])
+        dates = [d1 + dt.timedelta(days=x) for x in range((d2 - d1).days + 1)]
+
+        session_data['dates'] = dates
+
+class retrieve_data:
+    def GET(self):
+        pm = PersonModel.PersonModel()
+        user_id = pm.get_id_from_username(session_data['user'])
+        dates = session_data['dates']
+
+        return pm.get_records_from_dates(user_id,dates)
+
 
 
 if __name__ == "__main__":

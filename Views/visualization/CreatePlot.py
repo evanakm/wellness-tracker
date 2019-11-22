@@ -6,6 +6,7 @@ from bokeh.models import DatetimeTickFormatter, Select, FactorRange, ColumnDataS
 from bokeh.plotting import figure
 from bokeh.layouts import column, row
 from bokeh.models.widgets import CheckboxGroup, DateRangeSlider
+import requests
 
 raw_data = [{"date": "2019-11-04",
              "hours": {"00": "sleep",
@@ -146,6 +147,11 @@ def reduce_data_set_by_list(activities, dates):
 def reduce_data_set_by_indices(indices, dates):
     activities = [sorted_acts[i] for i in indices]
     return reduce_data_set_by_list(activities, dates)
+
+def get_new_data_set():
+    url = 'localhost:5400/set_dates'
+    data = {'first_date': date_slider.value[0],
+            'last_date': date_slider.value[1]}
 
 
 new_x, new_y = reduce_data_set_by_indices(checkbox_group.active, test_dates)
