@@ -7,6 +7,8 @@ from bokeh.plotting import figure
 from bokeh.layouts import column, row
 from bokeh.models.widgets import CheckboxGroup, DateRangeSlider
 import requests
+from Views.visualization.DataCache import DataCache
+from Models.PersonModel import PersonModel
 
 raw_data = [{"date": "2019-11-04",
              "hours": {"00": "sleep",
@@ -98,15 +100,6 @@ def get_unique_activities(data):
 
     return activities
 
-acts = get_unique_activities(raw_data)
-
-sorted_acts = list(acts)
-sorted_acts.sort()
-print(sorted_acts)
-
-checkbox_group = CheckboxGroup(labels=sorted_acts, active=[1,2])
-date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2018, 1, 1), end=dt.date.today(), value=(dt.date(2019, 11, 1), dt.date.today()), step=1)
-
 def extract_frequencies(data):
     activities = list(get_unique_activities(data))
 
@@ -128,43 +121,58 @@ def extract_frequencies(data):
 
     return x, tuple(freqs)
 
-x, y = extract_frequencies(raw_data)
+def reduce_data_set_by_booleans(bools, x_vals, y_vals, dates):
+    new_x_vals = [a for (a, b) in zip(x_vals, bools) if b]
+    new_y_vals = [a for (a, b) in zip(y_vals, bools) if b]
+
+    return new_x_vals, new_y_vals
+
+def reduce_data_set_by_list(activities, x_vals, y_vals, dates):
+    bools = [i[1] in activities for i in x_vals]
+    return reduce_data_set_by_booleans(bools, x_vals, y_vals, dates)
+
+def reduce_data_set_by_indices(indices, x_vals, y_vals, activity_list, dates):
+    activities = [activity_list[i] for i in indices]
+    return reduce_data_set_by_list(activities, x_vals, y_vals, dates)
+
+#----------#
+
+date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2018, 1, 1), end=dt.date.today(), value=(dt.date(2019, 11, 1), dt.date.today()), step=1)
+
+pm = PersonModel()
+user_id = pm.get_id_from_username('evanakm')
+
+dc = DataCache(user_id,date_slider.value[0],date_slider.value[1])
+dates = [dt.date(2019, 11, 27), dt.date(2019, 11, 28), dt.date(2019, 11, 29)]
+
+data_set = dc.get_serialized_data()
+
+#----------#
+
+print("data_set:")
+print(data_set)
+
+acts = get_unique_activities(data_set)
+
+print("acts:")
+print(acts)
+
+sorted_acts = list(acts)
+sorted_acts.sort()
+print(sorted_acts)
+
+checkbox_group = CheckboxGroup(labels=sorted_acts, active=[1,2])
+
+#----------#
+
+x, y = extract_frequencies(data_set)
 
 print(x)
 print(y)
 
+#---------#
 
-def reduce_data_set_by_booleans(bools, dates):
-    new_x = [a for (a, b) in zip(x, bools) if b]
-    new_y = [a for (a, b) in zip(y, bools) if b]
-
-    return new_x, new_y
-
-def reduce_data_set_by_list(activities, dates):
-    bools = [i[1] in activities for i in x]
-    return reduce_data_set_by_booleans(bools, dates)
-
-def reduce_data_set_by_indices(indices, dates):
-    activities = [sorted_acts[i] for i in indices]
-    return reduce_data_set_by_list(activities, dates)
-
-def get_new_data_set():
-    url = 'localhost:5400/set_dates'
-    data = {'first_date': date_slider.value[0],
-            'last_date': date_slider.value[1]}
-
-
-new_x, new_y = reduce_data_set_by_indices(checkbox_group.active, test_dates)
-
-red_acts = ['goal_3','sleep','tv']
-
-sublist = [i for i in x if i[1] in red_acts]
-
-#print(indices)
-#print(sublist)
-
-#new_x = [a for (a, b) in zip(x, indices) if b]
-#new_y = [a for (a, b) in zip(y, indices) if b]
+new_x, new_y = reduce_data_set_by_indices(checkbox_group.active, x, y, sorted_acts, test_dates)
 
 source = ColumnDataSource(data=dict(x=new_x, counts=new_y))
 
@@ -178,13 +186,19 @@ p.xaxis.major_label_orientation = 1
 p.xgrid.grid_line_color = None
 
 #show(p)
-
 # Controls
 def update():
     print(checkbox_group.active)
     print(date_slider.value)
 
-    update_x, update_y = reduce_data_set_by_indices(checkbox_group.active, test_dates)
+    start_date = date_slider.value[0]
+    end_date = date_slider.value[1]
+
+    dc.set_dates_and_update_cache_if_necessary(start_date, end_date)
+
+    data_set = dc.get_serialized_data()
+
+    update_x, update_y = reduce_data_set_by_indices(checkbox_group.active, x, y, sorted_acts, test_dates)
 
     p.x_range.factors = update_x
     source.data = dict(x=update_x, counts=update_y)

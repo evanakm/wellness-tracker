@@ -120,13 +120,16 @@ class PersonModel:
         if self.People.count_documents({'_id': person_id,'calendar': {'$elemMatch': {'date': find_date}}}) == 0:
             return
         else:
-            return self.People.find_one(person_filter, date_filter)['calendar'][0]
+            res = self.People.find_one(person_filter, date_filter)['calendar'][0]
+            return res
 
     def get_records_from_dates(self, person_id, dates):
         res = []
 
         for date in dates:
-            res.append(self.get_record_from_date(person_id, date))
+            temp = self.get_record_from_date(person_id, date)
+            if temp is not None:
+                res.append(temp)
 
         return res
 
@@ -151,16 +154,87 @@ pm.new_goal(user_id,'Michelle')
 pm.new_goal(user_id,'Improve Coding')
 pm.new_goal(user_id,'Read more')
 
-pm.new_day_in_calendar(user_id,dt.date(2019,11,4))
-pm.new_day_in_calendar(user_id,dt.date(2018,4,6))
-pm.new_day_in_calendar(user_id,dt.date(2016,10,14))
+pm.new_day_in_calendar(user_id,dt.date(2019,11,29))
+pm.new_day_in_calendar(user_id,dt.date(2019,11,28))
+pm.new_day_in_calendar(user_id,dt.date(2019,11,27))
 
-pm.add_activity_to_hour(user_id,dt.date(2019,11,4),4,'exercise')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),0,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),1,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),2,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),3,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),4,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),5,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),6,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),7,'Goal_1')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),8,'Goal_1')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),9,'Exercise')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),10,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),11,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),12,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),13,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),14,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),15,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),16,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),17,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),18,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),19,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),20,'Relationship')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),21,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),22,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,27),23,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),0,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),1,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),2,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),3,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),4,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),5,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),6,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),7,'Goal_3')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),8,'Goal_3')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),9,'Goal_3')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),10,'Goal_3')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),11,'Exercise')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),12,'Exercise')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),13,'Exercise')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),14,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),15,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),16,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),17,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),18,'Relationship')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),19,'Relationship')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),20,'Relationship')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),21,'Relationship')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),22,'Relationship')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,28),23,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),0,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),1,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),2,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),3,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),4,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),5,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),6,'None')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),7,'None')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),8,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),9,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),10,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),11,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),12,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),13,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),14,'Work')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),15,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),16,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),17,'Goal_2')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),18,'TV')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),19,'TV')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),20,'TV')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),21,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),22,'Sleep')
+pm.add_activity_to_hour(user_id,dt.date(2019,11,29),23,'Sleep')
 
-print(dumps(pm.get_record_from_date(user_id,dt.date(2019,11,4))))
-print(dumps(pm.get_record_from_date(user_id,dt.date(2018,4,6))))
+print(dumps(pm.get_record_from_date(user_id,dt.date(2019,11,29))))
+print(dumps(pm.get_record_from_date(user_id,dt.date(2018,11,28))))
 
-dates = [dt.date(2019,11,4), dt.date(2018,4,6)]
+dates = [dt.date(2019,11,27), dt.date(2019,11,29)]
 cals = pm.get_records_from_dates(user_id,dates)
 for cal in cals:
     print(dumps(cal))
