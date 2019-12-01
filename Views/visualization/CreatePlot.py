@@ -1,5 +1,3 @@
-import pandas as pd
-from math import pi
 import datetime as dt
 from bokeh.io import output_file, show, curdoc
 from bokeh.models import DatetimeTickFormatter, Select, FactorRange, ColumnDataSource
@@ -7,8 +5,9 @@ from bokeh.plotting import figure
 from bokeh.layouts import column, row
 from bokeh.models.widgets import CheckboxGroup, DateRangeSlider
 import requests
-from Views.visualization.DataCache import DataCache
-from Models.PersonModel import PersonModel
+from DataCache import DataCache
+from DataModel import DataModel
+import json
 
 raw_data = [{"date": "2019-11-04",
              "hours": {"00": "sleep",
@@ -139,13 +138,13 @@ def reduce_data_set_by_indices(indices, x_vals, y_vals, activity_list, dates):
 
 date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2018, 1, 1), end=dt.date.today(), value=(dt.date(2019, 11, 1), dt.date.today()), step=1)
 
-pm = PersonModel()
-user_id = pm.get_id_from_username('evanakm')
+#dm = DataModel('evanakm')
+#user_id = dm.person_id
 
-dc = DataCache(user_id,date_slider.value[0],date_slider.value[1])
+dc = DataCache('evanakm',date_slider.value[0],date_slider.value[1])
 dates = [dt.date(2019, 11, 27), dt.date(2019, 11, 28), dt.date(2019, 11, 29)]
 
-data_set = dc.get_serialized_data()
+data_set = json.loads(dc.get_serialized_data())
 
 #----------#
 

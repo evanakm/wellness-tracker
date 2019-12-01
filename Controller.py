@@ -92,6 +92,9 @@ class view_plot:
             # generate a script to load the customized session
             script = server_session(session_id=session.id, url='http://localhost:5006/CreatePlot')
 
+            print("Does it get here?")
+            print(script)
+
             # use the script in the rendered page
             return render.Main(script)
 

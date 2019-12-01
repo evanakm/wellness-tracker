@@ -1,15 +1,16 @@
-import pymongo
-from Models.PersonModel import PersonModel
+from DataModel import DataModel
 import datetime as dt
 from bson.json_util import dumps
 
 #A higher value means larger reads, but fewer updates
 DATA_BUFFER = 10
 
+# TODO: This should take an ObjectID called person_id, not a username, but it takes a username during this refactoring.
 class DataCache:
-    def __init__(self, person_id, first_date, last_date):
-        self.person_id = person_id
-        self.pm = PersonModel()
+    #def __init__(self, person_id, first_date, last_date):
+    def __init__(self, username, first_date, last_date):
+        self.dm = DataModel(username) #After integration, this will take person_id, not the other way around.
+        self.person_id = self.dm.person_id
         self.first_date = first_date
         self.last_date = last_date
 
@@ -18,7 +19,7 @@ class DataCache:
 
     def update_cache(self):
         date_array = DataCache.get_date_array(self.first_date, self.last_date)
-        self.cached_data = self.pm.get_records_from_dates(self.person_id, date_array)
+        self.cached_data = self.dm.get_records_from_dates(self.person_id, date_array)
 
     def set_dates_and_update_cache_if_necessary(self, new_first_date, new_last_date):
         refresh_data = False
