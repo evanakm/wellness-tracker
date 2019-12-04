@@ -1,6 +1,6 @@
 import web
 import datetime as dt
-from Models import PersonModel, CalendarModel
+from Models import PersonModel, CalendarModel, LoginModel
 from bson.json_util import dumps
 from json2html import *
 import dateutil.parser
@@ -17,7 +17,9 @@ urls = (
     '/add_hours','add_hours',
     '/add_data','add_data',
     '/table','tableau',
-    '/view_plot','view_plot'
+    '/view_plot','view_plot',
+    '/login','login',
+    '/check_login','check_login'
 )
 
 app = web.application(urls, globals())
@@ -34,7 +36,7 @@ class index:
     def GET(self):
         pm = PersonModel.PersonModel()
         user_id = pm.get_id_from_username('evanakm')
-        dates = [dt.date(2019, 11, 4), dt.date(2018, 4, 6), dt.date(2016,10,14)]
+        dates = [dt.date(2019, 11, 27), dt.date(2019, 11, 28)]
         data = dumps(pm.get_records_from_dates(user_id,dates))
 
         return render.Main(json2html.convert(json = data))
@@ -82,6 +84,24 @@ class retrieve_data:
         dates = session_data['dates']
 
         return pm.get_records_from_dates(user_id,dates)
+
+class login:
+    def GET(self):
+        return render.Login()
+
+class check_login:
+    def POST(self):
+        data = web.input()
+        login = LoginModel.LoginModel()
+        isCorrect = login.check_user(data)
+
+        if isCorrect:
+            print('login accepted')
+            session_data["user"] = isCorrect
+            return isCorrect
+
+        print('login not accepted')
+        return "Error"
 
 class view_plot:
     def GET(self):

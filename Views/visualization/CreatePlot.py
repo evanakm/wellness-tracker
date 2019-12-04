@@ -144,7 +144,7 @@ date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2018, 1, 1), e
 dc = DataCache('evanakm',date_slider.value[0],date_slider.value[1])
 dates = [dt.date(2019, 11, 27), dt.date(2019, 11, 28), dt.date(2019, 11, 29)]
 
-data_set = json.loads(dc.get_serialized_data())
+data_set = json.loads(dc.get_serialized_data(date_slider.value[0],date_slider.value[1]))
 
 #----------#
 
@@ -175,7 +175,7 @@ new_x, new_y = reduce_data_set_by_indices(checkbox_group.active, x, y, sorted_ac
 
 source = ColumnDataSource(data=dict(x=new_x, counts=new_y))
 
-p = figure(x_range=FactorRange(*new_x), plot_height=300, toolbar_location=None, tools="")
+p = figure(x_range=FactorRange(*new_x), plot_height=300, toolbar_location=None, tools="", min_border_bottom=80)
 
 p.vbar(x='x', top ='counts', width=0.9, source=source)
 
@@ -190,17 +190,32 @@ def update():
     print(checkbox_group.active)
     print(date_slider.value)
 
-    start_date = date_slider.value[0]
-    end_date = date_slider.value[1]
+    #I'm getting strange behaviour. Sometimes this is returning an int, sometimes a date
+    if isinstance(date_slider.value[0], dt.date):
+        start_date = date_slider.value[0]
+    else:
+        start_date = dt.date.fromtimestamp(date_slider.value[0] / 1000)
+
+    if isinstance(date_slider.value[1], dt.date):
+        end_date = date_slider.value[1]
+    else:
+        end_date = dt.date.fromtimestamp(date_slider.value[1] / 1000)
 
     dc.set_dates_and_update_cache_if_necessary(start_date, end_date)
 
-    data_set = dc.get_serialized_data()
+    x, y = extract_frequencies(json.loads(dc.get_serialized_data(start_date, end_date)))
 
     update_x, update_y = reduce_data_set_by_indices(checkbox_group.active, x, y, sorted_acts, test_dates)
 
-    p.x_range.factors = update_x
-    source.data = dict(x=update_x, counts=update_y)
+    print('update_x:')
+    print(update_x)
+    print('update_y:')
+    print(update_y)
+
+    # The non-zero is a workaround for strange bokeh behaviour
+    if len(update_x) != 0:
+        p.x_range.factors = update_x
+        source.data = dict(x=update_x, counts=update_y)
 
     '''source.data = df[(df.Location == location.value) & (df.Year == int(year.value))]
     #print(location.value)
@@ -214,6 +229,7 @@ def update():
     '''
 
 checkbox_group.on_change('active',lambda attr, old, new: update())
+date_slider.on_change('value',lambda attr, old, new: update())
 
 
 controls = column(checkbox_group,date_slider,width=300)

@@ -24,6 +24,12 @@ class DataCache:
     def set_dates_and_update_cache_if_necessary(self, new_first_date, new_last_date):
         refresh_data = False
 
+        print('in set dates:')
+        print('Type of new_first_date:')
+        print(type(new_first_date))
+        print('Type of self.first_date:')
+        print(type(self.first_date))
+
         if new_first_date < self.first_date:
             refresh_data = True
             self.first_date = new_first_date - dt.timedelta(days=DATA_BUFFER)
@@ -35,8 +41,11 @@ class DataCache:
         if refresh_data:
             self.update_cache()
 
-    def get_serialized_data(self):
-        return dumps(self.cached_data)
+    def get_serialized_data(self, first_date, last_date):
+        dates = DataCache.get_date_array(first_date, last_date)
+        relevant_data = [record for record in self.cached_data if dt.date.fromisoformat(record['date']) in dates]
+
+        return dumps(relevant_data)
 
     def reset(self, first_date, last_date):
         self.first_date = first_date
