@@ -7,6 +7,7 @@ import dateutil.parser
 import json
 from bokeh.client import pull_session
 from bokeh.embed import server_session
+import requests
 
 from Views.utilities import CreateTable
 
@@ -105,12 +106,11 @@ class check_login:
 
 class view_plot:
     def GET(self):
-        with pull_session(url="http://localhost:5006/CreatePlot") as session:
-            # update or customize that session
-            # session.document.roots[0].children[1].title.text = "Special Sliders For A Specific User!"
+        with pull_session(url="http://localhost:5006/CreatePlot", arguments=dict(username='evanakm',
+                                                    start_date='2019-11-01', end_date='2019-12-01')) as bokeh_session:
+            #print(bokeh_session.document.to_json_string())  # uncomment when debugging
 
-            # generate a script to load the customized session
-            script = server_session(session_id=session.id, url='http://localhost:5006/CreatePlot')
+            script = server_session(session_id=bokeh_session.id, url='http://localhost:5006/CreatePlot')
 
             print("Does it get here?")
             print(script)

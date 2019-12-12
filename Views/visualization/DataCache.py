@@ -24,12 +24,6 @@ class DataCache:
     def set_dates_and_update_cache_if_necessary(self, new_first_date, new_last_date):
         refresh_data = False
 
-        print('in set dates:')
-        print('Type of new_first_date:')
-        print(type(new_first_date))
-        print('Type of self.first_date:')
-        print(type(self.first_date))
-
         if new_first_date < self.first_date:
             refresh_data = True
             self.first_date = new_first_date - dt.timedelta(days=DATA_BUFFER)
