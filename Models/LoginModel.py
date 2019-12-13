@@ -19,4 +19,3 @@ class LoginModel:
 
         else:
             return False
-

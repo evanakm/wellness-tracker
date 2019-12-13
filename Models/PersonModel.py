@@ -15,6 +15,7 @@ class PersonModel:
         self.Calendar = self.db.calendar
         self.Goals = self.db.goals
 
+
     def insert_person(self,data):
         hashed = bcrypt.hashpw(data.password.encode(), bcrypt.gensalt())
 
@@ -29,6 +30,7 @@ class PersonModel:
                                 "location": data.location, "goals": data.goals, "calendar": calendar})
         print("uid is", id1)
 
+
     def get_id_from_username(self, username):
 
         if self.People.count_documents({"username": username}) == 0:
@@ -36,6 +38,7 @@ class PersonModel:
 
         person = self.People.find_one({"username": username})
         return person['_id']
+
 
     def new_goal(self, person_id, goal):
         filter = {'goal':re.compile(goal, re.IGNORECASE)}
@@ -64,6 +67,7 @@ class PersonModel:
         # TODO: personal_goals might not be the best return value, but it's good for debugging for now
         return personal_goals
 
+
     def get_id_from_goal_name(self, goal_name):
 
         if self.Goals.count_documents({"goal": goal_name}) == 0:
@@ -71,6 +75,7 @@ class PersonModel:
 
         goal = self.Goals.find_one({"username": goal_name})
         return goal['_id']
+
 
     def get_goal_name_from_id(self, id):
 
@@ -80,9 +85,11 @@ class PersonModel:
         goal = self.Goals.find_one({"_id": id})
         return goal['goal']
 
+
     def retrieve_calendar(self, person_id):
         person = self.People.find_one({"_id": person_id})
         return person['calendar']
+
 
     def new_day_in_calendar(self, person_id, date):
         new_date = dt.date(date.year, date.month, date.day).isoformat()
@@ -95,6 +102,7 @@ class PersonModel:
         else:
             return
 
+
     def add_activity_to_hour(self, person_id, date, hour, activity):
         find_date = dt.date(date.year, date.month, date.day).isoformat()
 
@@ -103,13 +111,14 @@ class PersonModel:
         hour_label = str(hour).zfill(2)
         field = 'calendar.$.hours.' + hour_label
 
-        if self.People.count_documents(filter) == 0:
-            return
-        else:
-            hour_filter = {'_id': person_id, 'calendar': {'$elemMatch': {'date': find_date}}}
-            self.People.update(hour_filter,{'$set': {field: activity}})
+        print('self.People.count_documents(filter) = ' + str(self.People.count_documents(filter)))
 
-        return
+        if self.People.count_documents(filter) == 0:
+            self.new_day_in_calendar(person_id, date)
+
+        hour_filter = {'_id': person_id, 'calendar': {'$elemMatch': {'date': find_date}}}
+        self.People.update(hour_filter,{'$set': {field: activity}})
+
 
     def get_record_from_date(self, person_id, date):
         find_date = dt.date(date.year, date.month, date.day).isoformat()
@@ -122,6 +131,7 @@ class PersonModel:
         else:
             res = self.People.find_one(person_filter, date_filter)['calendar'][0]
             return res
+
 
     def get_records_from_dates(self, person_id, dates):
         res = []
@@ -145,6 +155,7 @@ class TestData:
         self.goals = []
 
 
+'''
 data = TestData()
 pm = PersonModel()
 #pm.insert_person(data)
@@ -242,3 +253,4 @@ for cal in cals:
 print(dumps(cals))
 
 print(CreateTable.CreateTable(cals))
+'''

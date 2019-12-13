@@ -9,7 +9,7 @@ $(document).ready(function(){
             type: 'POST',
             data: form,
             success: function(res){
-                if(res== "error"){
+                if(res.toLowerCase()== "error"){
                     alert("Could not log in.");
                 }else{
                     console.log("Logged in as", res);

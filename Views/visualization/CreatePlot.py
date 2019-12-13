@@ -68,7 +68,7 @@ end_date = unwrap_parameter('end_date')
 
 #---------- DEFINITION OF STRUCTURES ----------#
 
-date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2018, 1, 1), end=dt.date.today(),
+date_slider = DateRangeSlider(title="Date Range: ", start=dt.date(2019, 10, 1), end=dt.date.today(),
                               value=(dt.date.fromisoformat(start_date), dt.date.fromisoformat(end_date)), step=1)
 
 dc = DataCache(username,date_slider.value[0],date_slider.value[1])
