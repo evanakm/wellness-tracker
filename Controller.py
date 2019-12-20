@@ -1,4 +1,12 @@
-import web
+#import web
+from flask import Flask, render_template, session, url_for, redirect, request
+from flask_wtf import Form
+import wtforms
+from flask_bootstrap import Bootstrap
+from flask_nav import Nav
+from flask_nav.elements import Navbar, Subgroup, View, Link, Text, Separator
+
+from types import SimpleNamespace as SNS
 import datetime as dt
 from Models import PersonModel, CalendarModel, LoginModel
 from bson.json_util import dumps
@@ -9,133 +17,159 @@ from bokeh.client import pull_session
 from bokeh.embed import server_session
 import requests
 
-from Views.utilities import CreateTable
+#web.config.debug = False
 
-web.config.debug = False
+class UserProfileForm(Form):
+    username = wtforms.StringField('username')
+    first_name = wtforms.StringField('first_name')
+    last_name = wtforms.StringField('last_name')
+    email = wtforms.StringField('email')
+    password = wtforms.PasswordField('password')
+    confirm_password = wtforms.PasswordField('confirm_password')
+    date_of_birth = wtforms.DateField('date_of_birth')
+    occupation = wtforms.StringField('occupation')
 
-urls = (
-    '/', 'entry_point',
-    '/add_hours','add_hours',
-    '/add_data','add_data',
-    '/table','tableau',
-    '/view_plot','view_plot',
-    '/login','login',
-    '/check_login','check_login'
+class AddDataForm(Form):
+    date = wtforms.DateField('date')
+    first_hour = wtforms.IntegerField('first_hour')
+    last_hour = wtforms.IntegerField('last_hour')
+    activity = wtforms.StringField('activity') #TODO: Make this a dropdown list
+
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'IveGotASecret'
+
+bootstrap = Bootstrap(app)
+nav = Nav(app)
+
+nav.register_element('navbar',Navbar(
+    'test_bar',
+    View('Home', 'entry_point'),
+    View('Track my progress','view_plot'))
 )
 
-app = web.application(urls, globals())
-session = web.session.Session(app, web.session.DiskStore("session"), initializer={
-    "user": None, "dates": [dt.date.today()]})
-session_data = session._initializer
+def validate_session():
+    if 'username' not in session:
+        #return redirect(url_for('login'))
+        return redirect('/login')
 
-render = web.template.render("Views/",base="Main",
-                             globals={"session":session_data,"current_user":session_data["user"]})
-
-#render = web.template.render("Views/",base="Main")
-
-class entry_point:
-    def GET(self):
-        if not session_data["user"]:
-            raise web.seeother('/login')
-        else:
-            print(session_data["user"])
-            pm = PersonModel.PersonModel()
-            user_id = pm.get_id_from_username(session_data["user"])
-            print(user_id)
-            dates = [dt.date(2019, 11, 27), dt.date(2019, 11, 28)]
-            data = dumps(pm.get_records_from_dates(user_id, dates))
-
-            print(data)
-
-            return render.Portal()
-
-            #return render.Blank(json2html.convert(json=data))
+    return False
 
 
-class index:
-    def GET(self):
-        pm = PersonModel.PersonModel()
-        user_id = pm.get_id_from_username('evanakm')
-        dates = [dt.date(2019, 11, 27), dt.date(2019, 11, 28)]
-        data = dumps(pm.get_records_from_dates(user_id,dates))
+def render(template, content = None):
+    body = render_template("Views/" + template, content=content)
+    return render_template("Views/Main.html", body=body)
 
-        return render.Main(json2html.convert(json = data))
 
-class add_hours:
-    def POST(self):
-        data = web.input()
-        pm = PersonModel.PersonModel()
-        user_id = pm.get_id_from_username(session_data["user"])
-        read_date = dateutil.parser.parse(data.date)
-        if data.first_hour <= data.last_hour:
-            for i in range(int(data.first_hour),int(data.last_hour)):
-                pm.add_activity_to_hour(user_id,read_date,i,data.activity)
+@app.route('/', methods=['GET'])
+def entry_point():
+    redir = validate_session()
+    if redir:
+        return redir
 
-class tableau:
-    def GET(self):
-        #print(session_data['user'])
+    #args = json2html.convert(json=data)
+    return render_template("Portal.html")
+    #return render_template("Main.html")
 
-        pm = PersonModel.PersonModel()
-        user_id = pm.get_id_from_username(session_data['user'])
-        dates = [dt.date(2019, 11, 4), dt.date(2018, 4, 6), dt.date(2016,10,14)]
-        #data = dumps(pm.get_records_from_dates(user_id,dates))
 
-        data = pm.get_records_from_dates(user_id,dates)
+@app.route('/add_hours', methods=['POST'])
+def add_hours():
+    user_id = session['user_id']
+    read_date = dateutil.parser.parse(request.form.get('date'))
 
-        return render.Main(CreateTable.CreateTable(data))
+    pm = PersonModel.PersonModel()
 
-class add_data:
-    def GET(self):
-        return render.AddData()
+    first_hour = request.form.get('first_hour')
+    last_hour = request.form.get('last_hour')
+    if int(first_hour) <= int(last_hour):
+        for i in range(int(first_hour),int(last_hour)):
+            pm.add_activity_to_hour(user_id,read_date,i,request.form.get('activity'))
 
-class set_dates:
-    def POST(self):
-        data = json.loads(web.data())
-        d1 = dt.date.fromisoformat(data['start_date'])
-        d2 = dt.date.fromisoformat(data['end_date'])
-        dates = [d1 + dt.timedelta(days=x) for x in range((d2 - d1).days + 1)]
 
-        session_data['dates'] = dates
+# This is for testing only.
+#@app.route('/debug_tableau', methods=['GET'])
+#def tableau():
+#    user_id = session['user_id']
+#    pm = PersonModel.PersonModel()
+#
+#    dates = [dt.date(2019, 11, 4), dt.date(2018, 4, 6), dt.date(2016,10,14)]
+#    #data = dumps(pm.get_records_from_dates(user_id,dates))
+#
+#    data = pm.get_records_from_dates(user_id,dates)
+#
+#    return render("Blank.html",CreateTable.CreateTable(data))
 
-class retrieve_data:
-    def GET(self):
-        pm = PersonModel.PersonModel()
-        user_id = pm.get_id_from_username(session_data['user'])
-        dates = session_data['dates']
 
-        return pm.get_records_from_dates(user_id,dates)
+@app.route('/add_data', methods=['GET'])
+def add_data():
+    redir = validate_session()
+    if redir:
+        return redir
 
-class login:
-    def GET(self):
-        return render.Login()
+    return render_template("AddData.html", form=AddDataForm())
 
-class check_login:
-    def POST(self):
-        data = web.input()
-        print(data)
-        login = LoginModel.LoginModel()
-        isCorrect = login.check_user(data)
 
-        if isCorrect:
-            print('login accepted')
-            session_data["user"] = isCorrect
-            return isCorrect
+@app.route('/login', methods=['GET'])
+def login():
+    redir = validate_session()
+    if redir:
+        return redir
 
-        print('login not accepted')
-        return "Error"
+    return render("Login.html")
 
-class view_plot:
-    def GET(self):
-        with pull_session(url="http://localhost:5006/CreatePlot", arguments=dict(username='evanakm',
-                                                    start_date='2019-11-01', end_date='2019-12-01')) as bokeh_session:
-            #print(bokeh_session.document.to_json_string())  # uncomment when debugging
 
-            script = server_session(session_id=bokeh_session.id, url='http://localhost:5006/CreatePlot')
+@app.route('/check_login', methods=['POST'])
+def check_login():
+    login = LoginModel.LoginModel()
 
-            # use the script in the rendered page
-            return render.Blank(script)
+    data = SNS()
+
+    data.username = request.form.get("username")
+    data.password = request.form.get("password")
+
+    isCorrect = login.check_user(data)
+
+    if isCorrect:
+        print('login accepted')
+        session["username"] = isCorrect
+        return isCorrect
+
+    print('login not accepted')
+    return "Error"
+
+
+@app.route('/view_plot', methods=['GET'])
+def view_plot():
+    redir = validate_session()
+    if redir:
+        return redir
+
+    with pull_session(url="http://localhost:5006/CreatePlot", arguments=dict(username=session['username'],
+                                                start_date='2019-11-01', end_date=dt.date.today().isoformat()))\
+                                                as bokeh_session:
+        #print(bokeh_session.document.to_json_string())  # uncomment when debugging
+
+        script = server_session(session_id=bokeh_session.id, url='http://localhost:5006/CreatePlot')
+
+        # use the script in the rendered page
+        return render("Blank.html",script)
+
+
+@app.route('/register', methods=['GET'])
+def register():
+    redir = validate_session()
+    if redir:
+        return redir
+
+    return render("Register.html", UserProfileForm())
+
+
+@app.route('/update_profile', methods=['POST'])
+class new_user:
+    pass
+
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="localhost",port=5000,debug=True)
 

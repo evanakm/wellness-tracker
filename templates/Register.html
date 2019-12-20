@@ -1,0 +1,26 @@
+{% extends "Main.html" %}
+
+{% block content %}
+{% from "_formhelpers.html" import render_field %}
+
+<div class = "container">
+    <h2>Register Account</h2>
+    <br /><br />
+
+    <form method=post action="/update_profile">
+      <dl>
+        {{ render_field(args.username) }}
+        {{ render_field(args.first_name) }}
+        {{ render_field(args.last_name) }}
+        {{ render_field(args.email) }}
+        {{ render_field(args.password) }}
+        {{ render_field(args.confirm_password) }}
+        {{ render_field(args.date_of_birth) }}
+        {{ render_field(args.occupation) }}
+
+      </dl>
+      <p><input type=submit value=Register>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,16 +1,29 @@
-$def with (data)
-$var css: static/css/bootstrap.min.css
-$var js: static/js/jquery-3.2.1.min.js static/js/bootstrap.min.js static/js/material.min.js static/js/ripples.js static/js/scripty.js
+{% extends "bootstrap/base.html" %}
+{% block title %}Welcome{% endblock %}
 
+{% block styles %}
+{{ super() }}
+{% endblock %}
 
+{% block navbar %}
+{{ nav.navbar.render() }}
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+<!--
+<script src="static/js/material.min.js"></script>
+<script src="static/js/ripples.js"></script>
+<script src="static/js/scripty.js"></script>
+-->
+{% endblock %}
+
+<!--
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Calendars</title>
 
-    $if self.css:
-    $for style in self.css.split():
-        <link rel="stylesheet" href = "$style" />
+    <link rel="stylesheet" href = "static/css/bootstrap.min.css" />
 
 </head>
 <body>
@@ -35,13 +48,13 @@ $var js: static/js/jquery-3.2.1.min.js static/js/bootstrap.min.js static/js/mate
         </div>
         <br /><br /><br />
 
+        {{ body }}
 
-    $:data
+        <script src="static/js/jquery-3.2.1.min.js"></script>
+        <script src="static/js/bootstrap.min.js"></script>
 
-    $if self.js:
-        $for script in self.js.split():
-            <script src="$script"></script>
 
 </body>
 
 </html>
+-->

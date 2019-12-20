@@ -15,7 +15,9 @@ def get_unique_activities(data):
 
     for day in data:
         for i in range(24):
-            activities.add(day['hours'][str(i).zfill(2)])
+            activity = day['hours'][str(i).zfill(2)]
+            if activity != "":
+                activities.add(activity)
 
     return activities
 
@@ -33,8 +35,9 @@ def extract_frequencies(data):
         dates[i] = day['date']
         for hour in range(24):
             act = day['hours'][str(hour).zfill(2)]
-            ix = i*number_of_activities + activities.index(act)
-            freqs[ix] = freqs[ix] + 1
+            if act != "":
+                ix = i*number_of_activities + activities.index(act)
+                freqs[ix] = freqs[ix] + 1
 
     x = [(a, b) for a in dates for b in activities]
 
@@ -139,6 +142,8 @@ def update_slider():
 
     dc.set_dates_and_update_cache_if_necessary(start_date, end_date)
 
+    old_acts = [checkbox_group.labels[i] for i in checkbox_group.active]
+
     new_data = json.loads(dc.get_serialized_data(start_date, end_date))
     x, y = extract_frequencies(new_data)
 
@@ -146,19 +151,22 @@ def update_slider():
     new_sorted_acts = list(new_acts)
     new_sorted_acts.sort()
 
-    print(new_sorted_acts)
-
-    indices = [i for i in range(len(new_sorted_acts)) if new_sorted_acts[i] in checkbox_group.active]
+    indices = [i for i in range(len(new_sorted_acts)) if new_sorted_acts[i] in old_acts]
 
     checkbox_group.labels = new_sorted_acts
     checkbox_group.active = indices
 
     update_x, update_y = reduce_data_set_by_indices(checkbox_group.active, x, y, new_sorted_acts)
 
-    # The non-zero is a workaround for strange bokeh behaviour
+    # This is a workaround for strange bokeh behaviour
     if len(update_x) != 0:
         p.x_range.factors = update_x
         source.data = dict(x=update_x, counts=update_y)
+    else:
+        # I don't like these gymnastics, but it makes the interface more intuitive.
+        placeholder_goals = {y for (x,y) in p.x_range.factors}
+        placeholder_indices = [i for i in range(len(new_sorted_acts)) if new_sorted_acts[i] in placeholder_goals]
+        checkbox_group.active = placeholder_indices
 
 
 checkbox_group.on_change('active',lambda attr, old, new: update_checkbox())

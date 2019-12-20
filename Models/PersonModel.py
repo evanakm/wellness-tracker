@@ -4,8 +4,11 @@ import re
 import datetime as dt
 from Models.CalendarModel import DailyRecord
 from bson.json_util import dumps
-from Views.utilities import CreateTable
+#from Views.utilities import CreateTable
 
+
+class IncompleteData(Exception):
+    pass
 
 class PersonModel:
     def __init__(self):
@@ -15,8 +18,16 @@ class PersonModel:
         self.Calendar = self.db.calendar
         self.Goals = self.db.goals
 
+    def register_new_account(self,data):
+
+        if self.People.count_documents({"username": data.username}) != 0:
+            return "username exists"
 
     def insert_person(self,data):
+
+        if self.People.count_documents({"username": data.username}) != 0:
+            return "username exists"
+
         hashed = bcrypt.hashpw(data.password.encode(), bcrypt.gensalt())
 
         now = dt.datetime.now()
@@ -26,7 +37,7 @@ class PersonModel:
         calendar = [{'date':start_date, 'hours': dr.hourly_tracker}]
 
         id1 = self.People.insert_one({"username": data.username, "password": hashed,
-                                "email": data.email, "age": data.age, "occupation": data.occupation,
+                                "email": data.email, "dob": data.dob.isoformat(), "occupation": data.occupation,
                                 "location": data.location, "goals": data.goals, "calendar": calendar})
         print("uid is", id1)
 
@@ -143,13 +154,12 @@ class PersonModel:
 
         return res
 
-
 class TestData:
     def __init__(self):
         self.username = 'evanakm'
         self.password = '123456'
         self.email = 'evanakm@gmail.com'
-        self.age = 24
+        self.dob = '1985-10-14'
         self.occupation = 'engineer'
         self.location = 'NYC'
         self.goals = []
