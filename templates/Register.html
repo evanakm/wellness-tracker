@@ -4,22 +4,24 @@
 {% from "_formhelpers.html" import render_field %}
 
 <div class = "container">
-    <h2>Register Account</h2>
+    <h2>{{ title }}</h2>
     <br /><br />
 
-    <form method=post action="/update_profile">
+    <form id="register_form">
       <dl>
-        {{ render_field(args.username) }}
-        {{ render_field(args.first_name) }}
-        {{ render_field(args.last_name) }}
-        {{ render_field(args.email) }}
-        {{ render_field(args.password) }}
-        {{ render_field(args.confirm_password) }}
-        {{ render_field(args.date_of_birth) }}
-        {{ render_field(args.occupation) }}
+          {% if new_user %}
+            {{ render_field(form.username) }}
+          {% endif %}
+        {{ render_field(form.first_name) }}
+        {{ render_field(form.last_name) }}
+        {{ render_field(form.email) }}
+        {{ render_field(form.password) }}
+        {{ render_field(form.confirm_password) }}
+        {{ render_field(form.date_of_birth) }}
+        {{ render_field(form.occupation) }}
 
       </dl>
-      <p><input type=submit value=Register>
+      <p><input type=submit value="Save Profile">
     </form>
 </div>
 

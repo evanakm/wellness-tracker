@@ -6,11 +6,16 @@
 {% endblock %}
 
 {% block navbar %}
-{{ nav.navbar.render() }}
+{% if session['login_status'] %}
+{{ nav.navbar_logged_in.render() }}
+{% else %}
+{{ nav.navbar_logged_out.render() }}
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 {{super()}}
+<script src="static/js/formhandler.js"></script>
 <!--
 <script src="static/js/material.min.js"></script>
 <script src="static/js/ripples.js"></script>

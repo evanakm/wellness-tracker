@@ -7,15 +7,16 @@
     <h2>Record New Activity</h2>
     <br /><br />
 
-    <form method=post action="/update_profile">
+    <form id="add_data_form">
       <dl>
         {{ render_field(form.date) }}
         {{ render_field(form.first_hour) }}
         {{ render_field(form.last_hour) }}
         {{ render_field(form.activity) }}
       </dl>
-      <p><input type=submit value=Register>
+      <p><input type=submit value="Add Hours">
     </form>
 </div>
 
 {% endblock %}
+

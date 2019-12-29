@@ -4,6 +4,7 @@ import re
 import datetime as dt
 from Models.CalendarModel import DailyRecord
 from bson.json_util import dumps
+from bson import ObjectId
 #from Views.utilities import CreateTable
 
 
@@ -36,10 +37,46 @@ class PersonModel:
         dr = DailyRecord()
         calendar = [{'date':start_date, 'hours': dr.hourly_tracker}]
 
+        if type(data.dob) is dt.date:
+            date = data.dob.isoformat()
+        else:
+            date = data.dob
+
         id1 = self.People.insert_one({"username": data.username, "password": hashed,
-                                "email": data.email, "dob": data.dob.isoformat(), "occupation": data.occupation,
+                                "first_name": data.first_name, "last_name": data.last_name,
+                                "email": data.email, "dob": date, "occupation": data.occupation,
                                 "location": data.location, "goals": data.goals, "calendar": calendar})
         print("uid is", id1)
+
+    def update_profile(self,person_id,data):
+
+        person_id = self.object_id(person_id)
+
+        if 'password' in data:
+            hashed = bcrypt.hashpw(data['password'].encode(), bcrypt.gensalt())
+            self.People.update_one({"_id": person_id},{"$set": {"password": hashed}})
+
+        if 'first_name' in data:
+            self.People.update_one({"_id": person_id},{"$set": {"first_name": data['first_name']}})
+
+        if 'last_name' in data:
+            self.People.update_one({"_id": person_id},{"$set": {"last_name": data['last_name']}})
+
+        if 'email' in data:
+            self.People.update_one({"_id": person_id},{"$set": {"email": data['email']}})
+
+        if 'dob' in data:
+            self.People.update_one({"_id": person_id},{"$set": {"dob": data['dob'].isoformat()}})
+
+        if 'occupation' in data:
+            self.People.update_one({"_id": person_id},{"$set": {"occupation": data['occupation']}})
+
+        if 'location' in data:
+            self.People.update_one({"_id": person_id},{"$set": {"occupation": data['location']}})
+
+        if 'goals' in data:
+            self.People.update_one({"_id": person_id},{"$set": {"occupation": data['goals']}})
+
 
 
     def get_id_from_username(self, username):
@@ -52,6 +89,8 @@ class PersonModel:
 
 
     def new_goal(self, person_id, goal):
+        person_id = self.object_id(person_id)
+
         filter = {'goal':re.compile(goal, re.IGNORECASE)}
         person = self.People.find_one({"_id": person_id})
 
@@ -98,11 +137,15 @@ class PersonModel:
 
 
     def retrieve_calendar(self, person_id):
+        person_id = self.object_id(person_id)
+
         person = self.People.find_one({"_id": person_id})
         return person['calendar']
 
 
     def new_day_in_calendar(self, person_id, date):
+        person_id = self.object_id(person_id)
+
         new_date = dt.date(date.year, date.month, date.day).isoformat()
 
         filter = {'_id':person_id, 'calendar':{'$elemMatch':{'date':new_date}}}
@@ -115,14 +158,14 @@ class PersonModel:
 
 
     def add_activity_to_hour(self, person_id, date, hour, activity):
+        person_id = self.object_id(person_id)
+
         find_date = dt.date(date.year, date.month, date.day).isoformat()
 
         filter = {'_id':person_id, 'calendar':{'$elemMatch':{'date':find_date}}}
 
         hour_label = str(hour).zfill(2)
         field = 'calendar.$.hours.' + hour_label
-
-        print('self.People.count_documents(filter) = ' + str(self.People.count_documents(filter)))
 
         if self.People.count_documents(filter) == 0:
             self.new_day_in_calendar(person_id, date)
@@ -132,6 +175,8 @@ class PersonModel:
 
 
     def get_record_from_date(self, person_id, date):
+        person_id = self.object_id(person_id)
+
         find_date = dt.date(date.year, date.month, date.day).isoformat()
 
         person_filter = {'_id': person_id}
@@ -145,6 +190,8 @@ class PersonModel:
 
 
     def get_records_from_dates(self, person_id, dates):
+        person_id = self.object_id(person_id)
+
         res = []
 
         for date in dates:
@@ -154,16 +201,23 @@ class PersonModel:
 
         return res
 
+    def object_id(self, oid):
+        if type(oid) != ObjectId:
+            return ObjectId(oid)
+
+        return oid
+
 class TestData:
     def __init__(self):
         self.username = 'evanakm'
+        self.first_name = 'Evan'
+        self.last_name = 'Meikleham'
         self.password = '123456'
         self.email = 'evanakm@gmail.com'
-        self.dob = '1985-10-14'
+        self.dob = dt.date(1985,10,14).isoformat()
         self.occupation = 'engineer'
         self.location = 'NYC'
         self.goals = []
-
 
 '''
 data = TestData()
@@ -262,5 +316,9 @@ for cal in cals:
 
 print(dumps(cals))
 
-print(CreateTable.CreateTable(cals))
+#print(CreateTable.CreateTable(cals))
+
+newdata = {'email': 'evanakm@protonmail.com'}
+pm.update_profile(user_id,newdata)
 '''
+

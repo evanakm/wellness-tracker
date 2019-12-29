@@ -1,5 +1,10 @@
 {% extends "Main.html" %}
 
 {% block content %}
-{{args.content}}
+{{ content }}
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+{{ script }}
 {% endblock %}

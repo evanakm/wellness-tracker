@@ -10,5 +10,5 @@ setup(
     author='Evan Meikleham',
     author_email='evanakm@protonmail.com',
     description='',
-    install_requires=['flask-bootstrap<3']
+    install_requires=['flask-bootstrap']
 )

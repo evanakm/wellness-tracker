@@ -1,39 +1,38 @@
-#import web
-from flask import Flask, render_template, session, url_for, redirect, request
-from flask_wtf import Form
+from flask import Flask, render_template, session, url_for, redirect, request, jsonify, Markup
+from flask_wtf import FlaskForm
 import wtforms
+from wtforms.fields.html5 import DateField
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import Navbar, Subgroup, View, Link, Text, Separator
 
-from types import SimpleNamespace as SNS
 import datetime as dt
 from Models import PersonModel, CalendarModel, LoginModel
-from bson.json_util import dumps
-from json2html import *
 import dateutil.parser
-import json
 from bokeh.client import pull_session
 from bokeh.embed import server_session
-import requests
 
-#web.config.debug = False
-
-class UserProfileForm(Form):
+class UserProfileForm(FlaskForm):
     username = wtforms.StringField('username')
     first_name = wtforms.StringField('first_name')
     last_name = wtforms.StringField('last_name')
     email = wtforms.StringField('email')
     password = wtforms.PasswordField('password')
     confirm_password = wtforms.PasswordField('confirm_password')
-    date_of_birth = wtforms.DateField('date_of_birth')
+    date_of_birth = DateField('date_of_birth',format='%Y-%m-%d')
     occupation = wtforms.StringField('occupation')
 
-class AddDataForm(Form):
-    date = wtforms.DateField('date')
+
+class AddDataForm(FlaskForm):
+    date = DateField('date',format='%Y-%m-%d')
     first_hour = wtforms.IntegerField('first_hour')
     last_hour = wtforms.IntegerField('last_hour')
     activity = wtforms.StringField('activity') #TODO: Make this a dropdown list
+
+
+class LoginForm(FlaskForm):
+    username = wtforms.StringField('username')
+    password = wtforms.PasswordField('password')
 
 
 app = Flask(__name__)
@@ -42,23 +41,31 @@ app.config['SECRET_KEY'] = 'IveGotASecret'
 bootstrap = Bootstrap(app)
 nav = Nav(app)
 
-nav.register_element('navbar',Navbar(
-    'test_bar',
+nav.register_element('navbar_logged_in',Navbar(
+    'Wellness Tracker',
     View('Home', 'entry_point'),
-    View('Track my progress','view_plot'))
+    View('Track my progress','view_plot'),
+    View('Logout', 'logout'))
+)
+
+nav.register_element('navbar_logged_out',Navbar(
+    'Wellness Tracker',
+    View('Home', 'entry_point'))
 )
 
 def validate_session():
+    if 'login_status' not in session:
+        session['login_status'] = False
+
     if 'username' not in session:
-        #return redirect(url_for('login'))
-        return redirect('/login')
+        return redirect(url_for('login'))
 
     return False
 
 
-def render(template, content = None):
-    body = render_template("Views/" + template, content=content)
-    return render_template("Views/Main.html", body=body)
+def clear_session():
+    for key in session.keys():
+        session.pop(key)
 
 
 @app.route('/', methods=['GET'])
@@ -67,8 +74,10 @@ def entry_point():
     if redir:
         return redir
 
+    pm = PersonModel.PersonModel()
+
     #args = json2html.convert(json=data)
-    return render_template("Portal.html")
+    return render_template("Portal.html", session=session)
     #return render_template("Main.html")
 
 
@@ -84,6 +93,8 @@ def add_hours():
     if int(first_hour) <= int(last_hour):
         for i in range(int(first_hour),int(last_hour)):
             pm.add_activity_to_hour(user_id,read_date,i,request.form.get('activity'))
+
+    return "Success"
 
 
 # This is for testing only.
@@ -111,28 +122,29 @@ def add_data():
 
 @app.route('/login', methods=['GET'])
 def login():
-    redir = validate_session()
-    if redir:
-        return redir
+    return render_template("Login.html", form = LoginForm())
 
-    return render("Login.html")
-
+@app.route('/logout', methods=['GET'])
+def logout():
+    session.clear()
+    session['login_status'] = False
+    return redirect(url_for('login'))
 
 @app.route('/check_login', methods=['POST'])
 def check_login():
     login = LoginModel.LoginModel()
 
-    data = SNS()
-
-    data.username = request.form.get("username")
-    data.password = request.form.get("password")
-
-    isCorrect = login.check_user(data)
+    isCorrect = login.check_user(request.form)
 
     if isCorrect:
         print('login accepted')
-        session["username"] = isCorrect
-        return isCorrect
+        session["username"] = isCorrect['username']
+        session["first_name"] = isCorrect['first_name']
+        session["user_id"] = str(isCorrect["_id"])
+
+        print(str(isCorrect))
+        session['login_status'] = True
+        return str(isCorrect)
 
     print('login not accepted')
     return "Error"
@@ -152,7 +164,7 @@ def view_plot():
         script = server_session(session_id=bokeh_session.id, url='http://localhost:5006/CreatePlot')
 
         # use the script in the rendered page
-        return render("Blank.html",script)
+        return render_template("Blank.html", content="", script=Markup(script))
 
 
 @app.route('/register', methods=['GET'])
@@ -161,12 +173,46 @@ def register():
     if redir:
         return redir
 
-    return render("Register.html", UserProfileForm())
+    return render_template("Register.html", form=UserProfileForm(), new_user=True, title="Register")
+
+@app.route('/change', methods=['GET'])
+def change():
+    redir = validate_session()
+    if redir:
+        return redir
+
+    return render_template("Register.html", form=UserProfileForm(), new_user=False, title="Edit My Profile")
 
 
 @app.route('/update_profile', methods=['POST'])
-class new_user:
-    pass
+def update_profile():
+    print("Does it get here?")
+    pm = PersonModel.PersonModel()
+
+    data = {}
+
+    if request.form['first_name'] != "":
+        data['first_name'] = request.form['first_name']
+
+    if request.form['last_name'] != "":
+        data['last_name'] = request.form['last_name']
+
+    if request.form['email'] != "":
+        data['email'] = request.form['email']
+
+    if request.form['date_of_birth'] != "":
+        data['dob'] = request.form['date_of_birth']
+
+    if request.form['password'] != "":
+        if request.form['password'] == request.form['confirm_password']:
+            data['password'] = request.form['password']
+
+    if request.form['occupation'] != "":
+        data['occupation'] = request.form['occupation']
+
+    pm.update_profile(session['user_id'],data)
+
+    return "Success"
 
 
 
