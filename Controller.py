@@ -34,7 +34,8 @@ class LoginForm(FlaskForm):
     username = wtforms.StringField('username')
     password = wtforms.PasswordField('password')
 
-
+print('__name__')
+print(__name__)
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'IveGotASecret'
 
@@ -50,7 +51,8 @@ nav.register_element('navbar_logged_in',Navbar(
 
 nav.register_element('navbar_logged_out',Navbar(
     'Wellness Tracker',
-    View('Home', 'entry_point'))
+    View('Home', 'entry_point'),
+    View('Register', 'register'))
 )
 
 def validate_session():
@@ -169,10 +171,6 @@ def view_plot():
 
 @app.route('/register', methods=['GET'])
 def register():
-    redir = validate_session()
-    if redir:
-        return redir
-
     return render_template("Register.html", form=UserProfileForm(), new_user=True, title="Register")
 
 @app.route('/change', methods=['GET'])
