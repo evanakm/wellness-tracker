@@ -22,7 +22,7 @@ pycparser==2.19
 pymongo==3.10.0
 pyparsing==2.4.6
 python-dateutil==2.8.1
-PyYAML==5.2
+PyYAML==5.4
 requests==2.22.0
 six==1.13.0
 tornado==6.0.3
